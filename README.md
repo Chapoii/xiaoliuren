@@ -1,5 +1,59 @@
-# Vue 3 + Vite
+# 🔮 小六壬占卜
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+小六壬，又称马前课、诸葛马前课，是中国古代一种简便的占卜方法。本项目基于 Vue 3 开发，提供在线小六壬占卜功能。
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## ✨ 功能特点
+
+- **自动时辰起卦** - 自动获取当前时辰、公历、农历日期
+- **可视化手掌动画** - 手指在六神点位间跳动，直观展示起卦过程
+- **三步起卦算法** - 按农历月、日、时辰依次推算
+- **吉凶颜色区分** - 吉神（大安、速喜、小吉）绿色，凶神（留连、赤口、空亡）红色
+- **详细卦象解读** - 提供求财、出行、婚姻、事业、健康等方面的断语
+
+## 🎯 六神介绍
+
+| 六神 | 属性 | 五行 | 含义 |
+|------|------|------|------|
+| 大安 | 吉 | 木 | 大安事事吉，求财得财利，出行保安宁 |
+| 留连 | 凶 | 水 | 留连事难成，求谋费苦心，凡事多阻滞 |
+| 速喜 | 吉 | 火 | 速喜喜临门，求财正当时，凡事皆顺遂 |
+| 赤口 | 凶 | 金 | 赤口主口舌，官非须防范，凡事多小心 |
+| 小吉 | 吉 | 木 | 小吉主小顺，凡事渐称心，终归得安宁 |
+| 空亡 | 凶 | 土 | 空亡事落空，求谋皆不成，凡事多虚幻 |
+
+## 📐 起卦方法
+
+1. **第一步** - 从大安起，数农历月份，落于第一宫
+2. **第二步** - 从第一宫起，数农历日期，落于第二宫
+3. **第三步** - 从第二宫起，数时辰序号，落于最终结果
+
+## 🛠️ 技术栈
+
+- **Vue 3** - 渐进式 JavaScript 框架
+- **Vite** - 下一代前端构建工具
+- **lunar-typescript** - 农历日期转换库
+
+## 🚀 本地运行
+
+```bash
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 构建生产版本
+npm run build
+```
+
+## 📝 声明
+
+本项目仅供娱乐参考，不作为任何决策依据。占卜结果请理性看待。
+
+## 📄 License
+
+[MIT](LICENSE)
+
+---
+
+© 2026 xiaoliuren
