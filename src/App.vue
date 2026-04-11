@@ -106,20 +106,78 @@
         </div>
 
         <div class="divine-panel">
-          <div class="time-select">
-            <label>选择占卜时辰</label>
-            <div class="time-chips">
-              <button
-                v-for="(shichen, i) in shichens"
-                :key="i"
-                :class="['chip', { active: selectedShichen === i }]"
-                @click="selectedShichen = i"
-              >
-                {{ shichen.name }}
-                <span class="chip-time">{{ shichen.time }}</span>
-              </button>
+          <div class="current-time-info">
+            <div class="time-info-row">
+              <span class="time-info-label">📅 公历</span>
+              <span class="time-info-value">{{ currentDateTime.solar }}</span>
             </div>
-            <button class="auto-btn" @click="useCurrentTime">🕐 使用当前时辰</button>
+            <div class="time-info-row">
+              <span class="time-info-label">🌙 农历</span>
+              <span class="time-info-value">{{ currentDateTime.lunar }}</span>
+            </div>
+            <div class="time-info-row">
+              <span class="time-info-label">🕐 时辰</span>
+              <span class="time-info-value">{{ currentDateTime.shichen }}</span>
+            </div>
+          </div>
+
+          <!-- 手掌起卦动画 -->
+          <div v-if="showPalm" class="palm-animation">
+            <div class="palm-visual">
+              <svg viewBox="0 0 340 380" class="palm-svg">
+                <!-- 手掌轮廓（含大拇指） -->
+                <path class="palm-outline" d="M150,360 L150,220 Q150,200 155,190 L155,190 L160,120 Q160,100 170,90 Q180,80 185,90 L185,160 Q185,170 190,170 L190,80 Q190,60 200,50 Q210,40 215,50 L215,155 Q215,165 220,165 L220,90 Q220,70 230,60 Q240,50 245,60 L245,160 Q245,170 250,170 L250,110 Q250,90 260,80 Q270,70 275,80 L275,180 Q275,200 260,210 L260,360 Z" />
+                <!-- 大拇指 -->
+                <path class="palm-outline thumb" d="M155,195 Q145,192 135,182 Q125,172 122,160 Q119,148 125,142 Q131,136 137,142 Q148,152 153,168 Q155,175 155,182" />
+                <!-- 指节线 -->
+                <line class="joint-line" x1="160" y1="170" x2="185" y2="170" />
+                <line class="joint-line" x1="190" y1="170" x2="215" y2="170" />
+                <line class="joint-line" x1="220" y1="170" x2="245" y2="170" />
+                <!-- 六神点位 -->
+                <!-- 大安(吉) -->
+                <circle class="palm-dot good" :class="{ active: currentDot === 0, landed: landedDots.includes(0), result: !isAnimating && finalDot === 0 }" cx="172" cy="145" r="16" />
+                <text class="palm-dot-text good" :class="{ active: currentDot === 0, result: !isAnimating && finalDot === 0 }" x="172" y="150">大安</text>
+                <!-- 留连(凶) -->
+                <circle class="palm-dot bad" :class="{ active: currentDot === 1, landed: landedDots.includes(1), result: !isAnimating && finalDot === 1 }" cx="172" cy="105" r="16" />
+                <text class="palm-dot-text bad" :class="{ active: currentDot === 1, result: !isAnimating && finalDot === 1 }" x="172" y="110">留连</text>
+                <!-- 速喜(吉) -->
+                <circle class="palm-dot good" :class="{ active: currentDot === 2, landed: landedDots.includes(2), result: !isAnimating && finalDot === 2 }" cx="202" cy="75" r="16" />
+                <text class="palm-dot-text good" :class="{ active: currentDot === 2, result: !isAnimating && finalDot === 2 }" x="202" y="80">速喜</text>
+                <!-- 赤口(凶) -->
+                <circle class="palm-dot bad" :class="{ active: currentDot === 3, landed: landedDots.includes(3), result: !isAnimating && finalDot === 3 }" cx="232" cy="85" r="16" />
+                <text class="palm-dot-text bad" :class="{ active: currentDot === 3, result: !isAnimating && finalDot === 3 }" x="232" y="90">赤口</text>
+                <!-- 小吉(吉) -->
+                <circle class="palm-dot good" :class="{ active: currentDot === 4, landed: landedDots.includes(4), result: !isAnimating && finalDot === 4 }" cx="232" cy="145" r="16" />
+                <text class="palm-dot-text good" :class="{ active: currentDot === 4, result: !isAnimating && finalDot === 4 }" x="232" y="150">小吉</text>
+                <!-- 空亡(凶) -->
+                <circle class="palm-dot bad" :class="{ active: currentDot === 5, landed: landedDots.includes(5), result: !isAnimating && finalDot === 5 }" cx="202" cy="165" r="16" />
+                <text class="palm-dot-text bad" :class="{ active: currentDot === 5, result: !isAnimating && finalDot === 5 }" x="202" y="170">空亡</text>
+                <!-- 手指指示 -->
+                <g v-if="isAnimating" class="finger-pointer" :transform="fingerTransform">
+                  <circle cx="0" cy="-22" r="9" fill="#3498db" opacity="0.9" />
+                  <line x1="0" y1="-13" x2="0" y2="0" stroke="#3498db" stroke-width="3" stroke-linecap="round" />
+                </g>
+              </svg>
+            </div>
+            <div class="palm-step-text">{{ palmStepText }}</div>
+            <!-- 计算步骤展示（3行列表） -->
+            <div v-if="showCalcSteps" class="calc-steps-list">
+              <div class="calc-step-item">
+                <span class="step-num">第一步</span>
+                <span class="step-desc">从<strong>大安</strong>起，数农历月 <strong>{{ calcSteps.lunarMonth }}</strong> → 落于 <strong class="god-name">{{ calcSteps.step1God }}</strong></span>
+              </div>
+              <div class="calc-step-item">
+                <span class="step-num">第二步</span>
+                <span class="step-desc">从<strong>{{ calcSteps.step1God }}</strong>起，数农历日 <strong>{{ calcSteps.lunarDay }}</strong> → 落于 <strong class="god-name">{{ calcSteps.step2God }}</strong></span>
+              </div>
+              <div class="calc-step-item">
+                <span class="step-num">第三步</span>
+                <span class="step-desc">从<strong>{{ calcSteps.step2God }}</strong>起，数时辰 <strong>{{ calcSteps.hourName }}（{{ calcSteps.hourNum }}）</strong> → 落于 <strong :class="['god-name', 'final', calcSteps.step3Type]">{{ calcSteps.step3God }}</strong></span>
+              </div>
+              <div class="calc-lunar-info">
+                农历 {{ calcSteps.lunarMonthChinese }}月{{ calcSteps.lunarDayChinese }} · {{ calcSteps.hourName }}
+              </div>
+            </div>
           </div>
 
           <button class="divine-btn" @click="startDivination" :disabled="isAnimating">
@@ -170,18 +228,28 @@
     <!-- Footer -->
     <footer class="footer">
       <p>🔮 小六壬占卜 · 仅供娱乐参考，不作为任何决策依据</p>
-      <p class="footer-sub">© 2025 xiaoliuren · MIT License</p>
+      <p class="footer-sub">© 2026 xiaoliuren · MIT License</p>
     </footer>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Solar } from 'lunar-typescript'
 
 const isScrolled = ref(false)
 const selectedShichen = ref(-1)
 const isAnimating = ref(false)
+const currentDot = ref(-1)
+const landedDots = ref([])
+const fingerTransform = ref('')
+const palmStepText = ref('')
+const showPalm = ref(false)
+const finalDot = ref(-1)
+const showCalcSteps = ref(false)
+const calcSteps = ref({})
 const result = ref(null)
+const currentDateTime = ref({ solar: '', lunar: '', shichen: '' })
 
 const shichens = [
   { name: '子时', time: '23-01' }, { name: '丑时', time: '01-03' },
@@ -269,9 +337,8 @@ const methodSteps = [
 ]
 
 // 小六壬算法
-function calculateXiaoLiuRen(month, day, hourIndex) {
-  const godsOrder = ['大安', '留连', '速喜', '赤口', '小吉', '空亡']
-  const godsInfo = {
+const godsOrder = ['大安', '留连', '速喜', '赤口', '小吉', '空亡']
+const godsInfo = {
     '大安': {
       type: 'good', element: '木',
       meaning: '大安事事吉，求财得财利，出行保安宁，百事皆如意。此卦为大吉之象，诸事顺遂，心想事成。',
@@ -346,33 +413,6 @@ function calculateXiaoLiuRen(month, day, hourIndex) {
     },
   }
 
-  // 第一步：月 + 日
-  let step1 = (month + day) % 6
-  if (step1 === 0) step1 = 6
-
-  // 第二步：step1 + 时辰序号(1-12)
-  let step2 = (step1 + hourIndex + 1) % 6
-  if (step2 === 0) step2 = 6
-
-  // 第三步：step1 + step2
-  let step3 = (step1 + step2) % 6
-  if (step3 === 0) step3 = 6
-
-  const godName = godsOrder[step3 - 1]
-  const info = godsInfo[godName]
-
-  return {
-    god: godName,
-    type: info.type,
-    element: info.element,
-    shichen: shichens[hourIndex].name,
-    meaning: info.meaning,
-    readings: info.readings,
-    advice: info.advice,
-    steps: [step1, step2, step3]
-  }
-}
-
 function useCurrentTime() {
   const now = new Date()
   const hour = now.getHours()
@@ -381,15 +421,58 @@ function useCurrentTime() {
   if (hour === 23 || hour === 0) idx = 0
   else idx = Math.ceil(hour / 2)
   selectedShichen.value = idx
+
+  // 计算当前日期时间信息
+  const solar = Solar.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate())
+  const lunar = solar.getLunar()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六']
+  const weekDay = weekDays[now.getDay()]
+  currentDateTime.value = {
+    solar: `${y}年${m}月${d}日 星期${weekDay}`,
+    lunar: `${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,
+    shichen: `${shichens[idx].name}（第${idx + 1}个，${shichens[idx].time}点）`
+  }
 }
 
-function getLunarMonth() {
-  // 简化：使用公历月份（小六壬民间用法中常用公历月日）
-  return new Date().getMonth() + 1
-}
 
-function getLunarDay() {
-  return new Date().getDate()
+// 六神点位坐标（与 SVG 中的 cx, cy 对应）
+const dotPositions = [
+  { x: 172, y: 145, name: '大安' },
+  { x: 172, y: 105, name: '留连' },
+  { x: 202, y: 75,  name: '速喜' },
+  { x: 232, y: 85,  name: '赤口' },
+  { x: 232, y: 145, name: '小吉' },
+  { x: 202, y: 165, name: '空亡' },
+]
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
+
+async function animateFinger(sequence) {
+  currentDot.value = -1
+  landedDots.value = []
+  palmStepText.value = '起卦中...'
+
+  for (let i = 0; i < sequence.length; i++) {
+    const dotIdx = sequence[i]
+    currentDot.value = dotIdx
+    const pos = dotPositions[dotIdx]
+    fingerTransform.value = `translate(${pos.x}, ${pos.y})`
+    palmStepText.value = `第${i + 1}步：${pos.name}`
+
+    await sleep(350)
+
+    if (i < sequence.length - 1) {
+      landedDots.value.push(dotIdx)
+    }
+  }
+
+  // 最后一个点位闪烁
+  await sleep(500)
+  palmStepText.value = `结果：${dotPositions[sequence[sequence.length - 1]].name}`
+  await sleep(600)
 }
 
 function startDivination() {
@@ -407,13 +490,68 @@ function startDivination() {
 
   isAnimating.value = true
   result.value = null
+  showPalm.value = true
+  finalDot.value = -1
+  showCalcSteps.value = false
+  calcSteps.value = {}
 
-  setTimeout(() => {
-    const month = getLunarMonth()
-    const day = getLunarDay()
-    result.value = calculateXiaoLiuRen(month, day, hourIndex)
+  // 获取农历月日
+  const now = new Date()
+  const solar = Solar.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate())
+  const lunar = solar.getLunar()
+  const lunarMonth = lunar.getMonth()
+  const lunarDay = lunar.getDay()
+  const lunarMonthChinese = lunar.getMonthInChinese()
+  const lunarDayChinese = lunar.getDayInChinese()
+
+  // 小六壬起卦算法（正确版）
+  // 六神顺序：0大安 1留连 2速喜 3赤口 4小吉 5空亡
+  // 第一步：从大安(0)起，数农历月，落于 step1
+  const step1 = (lunarMonth - 1) % 6  // 月=1→大安(0), 月=2→留连(1)...
+  // 第二步：从step1起，数农历日，落于 step2
+  const step2 = (step1 + lunarDay - 1) % 6
+  // 第三步：从step2起，数时辰序号(子=1,丑=2...)，落于 step3
+  const hourNum = hourIndex + 1
+  const step3 = (step2 + hourNum - 1) % 6
+
+  // 生成手指跳动序列
+  const sequence = []
+  for (let i = 0; i < lunarMonth; i++) sequence.push(i % 6)
+  for (let i = 0; i < lunarDay; i++) sequence.push((step1 + i) % 6)
+  for (let i = 0; i < hourNum; i++) sequence.push((step2 + i) % 6)
+
+  // 执行动画后显示结果
+  animateFinger(sequence).then(() => {
+    const godName = godsOrder[step3]
+    const info = godsInfo[godName]
+
+    finalDot.value = step3
+    showCalcSteps.value = true
+    calcSteps.value = {
+      lunarMonth, lunarDay,
+      lunarMonthChinese, lunarDayChinese,
+      hourName: shichens[hourIndex].name,
+      hourNum,
+      step1God: godsOrder[step1],
+      step2God: godsOrder[step2],
+      step3God: godName,
+      step3Type: info.type,
+    }
+
+    result.value = {
+      god: godName,
+      type: info.type,
+      element: info.element,
+      shichen: shichens[hourIndex].name,
+      meaning: info.meaning,
+      readings: info.readings,
+      advice: info.advice,
+      steps: [step1, step2, step3]
+    }
     isAnimating.value = false
-  }, 1500)
+    currentDot.value = -1
+    landedDots.value = []
+  })
 }
 
 function handleScroll() {
@@ -460,10 +598,15 @@ a { color: inherit; text-decoration: none; }
 
 <style scoped>
 /* Navbar */
-.navbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  padding: 16px 0; transition: all 0.3s;
-}
+.navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; transition: all 0.3s; }
+.navbar .nav-logo { color: #fff; }
+.navbar .nav-links a { color: rgba(255,255,255,0.7); }
+.navbar .nav-links a:hover { color: #fff; }
+.navbar .nav-cta { background: rgba(255,255,255,0.9) !important; color: var(--primary) !important; }
+.navbar.scrolled .nav-logo { color: var(--primary); }
+.navbar.scrolled .nav-links a { color: var(--text-dim); }
+.navbar.scrolled .nav-links a:hover { color: var(--primary); }
+.navbar.scrolled .nav-cta { background: var(--primary) !important; color: #fff !important; }
 .navbar.scrolled {
   background: rgba(250,248,245,0.95); backdrop-filter: blur(12px);
   box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 10px 0;
@@ -475,13 +618,14 @@ a { color: inherit; text-decoration: none; }
 .nav-logo {
   font-family: 'Noto Serif SC', serif; font-weight: 700;
   font-size: 1.15rem; color: var(--primary);
+  transition: color 0.3s;
 }
-.nav-links { display: flex; gap: 28px; }
-.nav-links a { font-size: 0.88rem; color: var(--text-dim); font-weight: 500; transition: color 0.3s; }
+.nav-links { display: flex; gap: 28px; align-items: center; }
+.nav-links a { font-size: 0.88rem; font-weight: 500; transition: color 0.3s; }
 .nav-links a:hover { color: var(--primary); }
 .nav-cta {
-  background: var(--primary) !important; color: #fff !important;
   padding: 8px 20px; border-radius: 25px; font-weight: 600 !important;
+  transition: all 0.3s;
 }
 
 /* Hero */
@@ -609,28 +753,31 @@ a { color: inherit; text-decoration: none; }
   border-radius: 24px; padding: 36px; box-shadow: var(--shadow);
   border: 2px solid var(--border);
 }
-.time-select label {
-  display: block; font-weight: 600; margin-bottom: 12px; font-size: 0.95rem;
+.current-time-info {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding: 16px 24px;
+  background: var(--bg);
+  border-radius: 12px;
+  border: 1px solid var(--border);
 }
-.time-chips {
-  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
+.time-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.chip {
-  padding: 8px 14px; border-radius: 20px; border: 2px solid var(--border);
-  background: var(--bg); cursor: pointer; font-size: 0.85rem; font-family: inherit;
-  transition: all 0.3s; display: flex; align-items: center; gap: 6px;
+.time-info-label {
+  font-size: 0.9rem;
+  color: var(--text-dim);
 }
-.chip:hover { border-color: var(--gold); }
-.chip.active {
-  background: var(--primary); color: #fff; border-color: var(--primary);
+.time-info-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
 }
-.chip-time { font-size: 0.72rem; opacity: 0.7; }
-.auto-btn {
-  background: none; border: 1px solid var(--border); padding: 8px 16px;
-  border-radius: 20px; cursor: pointer; font-size: 0.82rem; font-family: inherit;
-  color: var(--text-dim); transition: all 0.3s; margin-bottom: 24px;
-}
-.auto-btn:hover { border-color: var(--gold); color: var(--gold); }
 
 .divine-btn {
   width: 100%; padding: 18px; border-radius: 16px; border: none;
@@ -645,6 +792,201 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 6px 30px rgba(26,26,46,0.3);
 }
 .divine-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+/* Palm Animation */
+.palm-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.palm-visual {
+  width: 240px;
+  height: 280px;
+  position: relative;
+}
+
+.palm-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.palm-outline {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+
+.joint-line {
+  stroke: var(--gold);
+  stroke-width: 1.5;
+  opacity: 0.3;
+}
+
+.palm-dot {
+  fill: rgba(212,168,83,0.1);
+  stroke: var(--gold);
+  stroke-width: 1.5;
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.palm-dot.good {
+  stroke: #27ae60;
+  fill: rgba(39,174,96,0.08);
+}
+.palm-dot.bad {
+  stroke: #c0392b;
+  fill: rgba(192,57,43,0.08);
+}
+
+.palm-dot.active {
+  fill: rgba(52,152,219,0.3);
+  stroke: #3498db;
+  stroke-width: 2.5;
+  opacity: 1;
+  animation: dotPulse 0.6s ease-in-out;
+}
+
+.palm-dot.landed {
+  fill: rgba(212,168,83,0.2);
+  stroke: var(--gold);
+  stroke-width: 2;
+  opacity: 0.8;
+}
+
+.palm-dot.result {
+  fill: rgba(192,57,43,0.25);
+  stroke: #c0392b;
+  stroke-width: 2.5;
+  opacity: 1;
+  animation: dotGlow 2s ease-in-out infinite;
+}
+
+@keyframes dotGlow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(192,57,43,0.3)); }
+  50% { filter: drop-shadow(0 0 10px rgba(192,57,43,0.6)); }
+}
+
+@keyframes dotPulse {
+  0% { r: 14; }
+  50% { r: 20; }
+  100% { r: 14; }
+}
+
+.palm-dot-text {
+  fill: var(--text-dim);
+  font-size: 10px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font-weight: 600;
+  pointer-events: none;
+  transition: fill 0.3s;
+}
+.palm-dot-text.good { fill: #27ae60; }
+.palm-dot-text.bad { fill: #c0392b; }
+
+.palm-dot-text.active {
+  fill: #3498db;
+  font-size: 11px;
+}
+
+.palm-dot-text.result {
+  fill: #c0392b;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.finger-pointer {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 4px rgba(192,57,43,0.4));
+}
+
+.palm-step-text {
+  margin-top: 12px;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1rem;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+.palm-fade-enter-active {
+  animation: palmFadeIn 0.4s ease;
+}
+
+/* Calc Steps List */
+.calc-steps-list {
+  margin-top: 14px;
+  padding: 16px 20px;
+  background: var(--bg);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  animation: fadeIn 0.4s ease;
+}
+
+.calc-step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.calc-step-item:last-of-type {
+  border-bottom: none;
+}
+
+.step-num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gold);
+  background: rgba(212,168,83,0.1);
+  padding: 3px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.step-desc {
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.step-desc strong {
+  color: var(--primary);
+}
+
+.god-name {
+  color: var(--gold);
+  font-family: 'Noto Serif SC', serif;
+}
+
+.god-name.final {
+  font-size: 1rem;
+}
+.god-name.final.good { color: #27ae60; }
+.god-name.final.bad { color: #c0392b; }
+
+.calc-lunar-info {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-family: 'Noto Serif SC', serif;
+}
+.palm-fade-leave-active {
+  animation: palmFadeIn 0.3s ease reverse;
+}
+
+@keyframes palmFadeIn {
+  from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
@@ -670,6 +1012,11 @@ a { color: inherit; text-decoration: none; }
 }
 .result-header .good { background: linear-gradient(135deg, rgba(39,174,96,0.08), rgba(39,174,96,0.02)); }
 .result-header .bad { background: linear-gradient(135deg, rgba(192,57,43,0.08), rgba(192,57,43,0.02)); }
+
+.result-god {
+  padding: 16px 20px;
+  border-radius: 12px;
+}
 
 .result-god-name {
   font-family: 'Noto Serif SC', serif; font-size: 2rem; font-weight: 900;
@@ -722,7 +1069,6 @@ a { color: inherit; text-decoration: none; }
   .intro-grid, .gods-grid { grid-template-columns: 1fr; }
   .readings-grid { grid-template-columns: 1fr; }
   .result-header { flex-direction: column; gap: 12px; text-align: center; }
-  .nav-links a:not(.nav-cta) { display: none; }
   .section-title { font-size: 1.6rem; }
 }
 </style>
