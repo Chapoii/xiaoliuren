@@ -5,8 +5,8 @@
       <div class="nav-inner">
         <div class="nav-logo">🔮 小六壬占卜</div>
         <div class="nav-links">
-          <a href="#intro">占卜简介</a>
-          <a href="#method">起卦方法</a>
+          <a href="#intro" class="nav-hide-mobile">占卜简介</a>
+          <a href="#method" class="nav-hide-mobile">起卦方法</a>
           <a href="#divine" class="nav-cta">起一卦</a>
         </div>
       </div>
@@ -330,10 +330,9 @@ const gods = [
 ]
 
 const methodSteps = [
-  { title: '确定时辰', desc: '以占卜时的农历月、日、时辰为基础。时辰对应十二地支：子丑寅卯辰巳午未申酉戌亥。' },
-  { title: '月日相加', desc: '将农历月份与日期相加，得出第一个数。若超过 6 则取余数（余 0 为 6）。' },
-  { title: '再加时辰', desc: '将上一步的数与时辰序号相加，若超过 6 则取余数。此为第二个数。' },
-  { title: '三数定宫', desc: '将两个数再相加，取余数定宫。从「大安」起顺数，即得所落之宫。' },
+  { title: '数月份', desc: '从「大安」起，按农历月份顺数。如农历二月，就从大安数到留连，落于留连。' },
+  { title: '数日期', desc: '从上一步落定的宫位起，按农历日期顺数。如农历二十四日，就从留连继续数24步。' },
+  { title: '数时辰', desc: '从上一步落定的宫位起，按时辰序号顺数（子时为1、丑时为2……亥时为12）。最终落定的宫位即为占卜结果。' },
 ]
 
 // 小六壬算法
@@ -627,6 +626,12 @@ a { color: inherit; text-decoration: none; }
   padding: 8px 20px; border-radius: 25px; font-weight: 600 !important;
   transition: all 0.3s;
 }
+.nav-hide-mobile {
+  display: inline;
+}
+@media (max-width: 640px) {
+  .nav-hide-mobile { display: none; }
+}
 
 /* Hero */
 .hero {
@@ -860,16 +865,16 @@ a { color: inherit; text-decoration: none; }
 }
 
 .palm-dot.result {
-  fill: rgba(192,57,43,0.25);
-  stroke: #c0392b;
+  fill: rgba(52,152,219,0.25);
+  stroke: #3498db;
   stroke-width: 2.5;
   opacity: 1;
   animation: dotGlow 2s ease-in-out infinite;
 }
 
 @keyframes dotGlow {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(192,57,43,0.3)); }
-  50% { filter: drop-shadow(0 0 10px rgba(192,57,43,0.6)); }
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(52,152,219,0.3)); }
+  50% { filter: drop-shadow(0 0 10px rgba(52,152,219,0.6)); }
 }
 
 @keyframes dotPulse {
@@ -896,7 +901,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .palm-dot-text.result {
-  fill: #c0392b;
+  fill: #3498db;
   font-weight: 700;
   font-size: 11px;
 }
